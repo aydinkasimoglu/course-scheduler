@@ -2,26 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+* {
+  @apply dark:text-gray-100;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  @apply dark:bg-gray-900;
+}
+
+input {
+  @apply text-gray-900 dark:text-white;
+}
+
+.textfield {
+  @apply block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700  dark:ring-[rgb(255_255_255/0.1)] dark:placeholder:text-gray-400;
+}
+
+.styledLabel {
+  @apply mb-2 block text-sm font-medium leading-6;
+}
+
+label {
+  @apply text-gray-700 dark:text-gray-300;
+}
+
+form {
+  @apply bg-white dark:bg-gray-800;
+}
+
+table {
+  @apply border-collapse border-spacing-0;
+}
+
+td,
+th {
+  border: 1px solid #ddd;
+  @apply p-3 text-center align-middle dark:border-white;
+}
+
+::backdrop {
+  @apply backdrop-blur-sm backdrop-filter;
+  backdrop-filter: blur(2px);
 }
