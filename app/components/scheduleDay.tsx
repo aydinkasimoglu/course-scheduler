@@ -1,4 +1,5 @@
 import { getCoursesByDay } from "@/app/lib/actions";
+import { getInstructorName } from "@/app/lib/actions";
 
 type ScheduleDayProps = {
   day: string;
@@ -6,6 +7,18 @@ type ScheduleDayProps = {
 
 export default async function ScheduleDay({ day }: ScheduleDayProps) {
   const result = await getCoursesByDay(day);
+
+  /**
+   * 
+   * @param id 
+   * @returns instructor name 
+   */
+  async function getInstructor(id: number) {
+    const instructorName = await getInstructorName(id);
+    if (instructorName.success) {
+      return instructorName.data;
+    }
+  }
 
   if (!result.success) {
     return (
@@ -39,7 +52,17 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                       course.time === "9:00 - 10:00" && course.grade === grade,
                   )
                   .map((course) => (
-                    <li key={course.id}>{course.name}</li>
+                    <li key={course.id} className="flex items-center justify-center p-0">
+                    <div id="about">
+                    	<p className="text-3xl">{course.name}</p>
+                      <p className="font-light text-xs">{getInstructor(course.instructorId)}</p>
+                    </div>
+                    <div id="dropdown-menu" className="ml-3">
+                      <button className="material-symbols-outlined text-gray-600 hover:text-gray-800 focus:outline-none">
+                              more_horiz
+                      </button>
+                    </div>
+                  </li>
                   ))}
               </ul>
             </td>
@@ -71,7 +94,17 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                         course.time === timeSlot && course.grade === grade,
                     )
                     .map((course) => (
-                      <li key={course.id}>{course.name}</li>
+											<li key={course.id} className="flex items-center justify-center p-0">
+											<div id="about">
+												<p className="text-3xl">{course.name}</p>
+												<p className="font-light text-xs">{getInstructor(course.instructorId)}</p>
+											</div>
+											<div id="dropdown-menu" className="ml-3">
+												<button className="material-symbols-outlined text-gray-600 hover:text-gray-800 focus:outline-none">
+																more_horiz
+												</button>
+											</div>
+										</li>
                     ))}
                 </ul>
               </td>

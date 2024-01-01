@@ -43,6 +43,26 @@ export async function createCourse(
 }
 
 /**
+ * 
+ * @param id 
+ * @returns instructor name or error
+ */
+export async function getInstructorName(id: number): Promise<Result<string>> {
+    try {
+        const instructor = await prisma.instructor.findUnique({
+        where: {
+            id: id,
+        },
+        });
+    
+        return { success: true, data: instructor?.name ?? "" };
+    } catch (error) {
+        return { success: false, error: error as Error };
+    }
+}
+
+
+/**
  * Filters courses by given day.
  *
  * @param day Day to filter by.
