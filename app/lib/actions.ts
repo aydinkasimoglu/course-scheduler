@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/app/lib/prisma";
-import { Course } from "@prisma/client";
+import { Course, Instructor } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 type Result<T> = { success: true; data: T } | { success: false; error: Error };
@@ -59,5 +59,34 @@ export async function getCoursesByDay(day: string): Promise<Result<Course[]>> {
     return { success: true, data: courses };
   } catch (error) {
     return { success: false, error: error as Error };
+  }
+}
+
+export async function getInstructors(): Promise<Result<Instructor[]>> {
+  try {
+    const instructors = await prisma.instructor.findMany();
+
+    return { success: true, data: instructors };
+  } catch (error) {
+    return { success: false, error: error as Error };
+  }
+}
+
+export async function createInstructor(
+  currentState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    const { name } = Object.fromEntries(formData.entries());
+
+    await prisma.instructor.create({
+      data: {
+        name: String(name),
+      },
+    });
+
+    revalidatePath("/");
+  } catch (error) {
+    return `Error while creating instructor: ${error}`;
   }
 }
