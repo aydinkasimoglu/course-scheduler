@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
-import { createCourse } from "@/app/lib/actions";
+import { createCourse, getInstructors } from "@/app/lib/actions";
+import { Instructor } from "@prisma/client";
 
 export default function CourseForm() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -13,6 +14,19 @@ export default function CourseForm() {
   const classRef = useRef<HTMLSelectElement>(null);
   const instructorRef = useRef<HTMLSelectElement>(null);
   const [errorMessage, dispatch] = useFormState(createCourse, undefined);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+
+  useEffect(() => {
+    const loadInstructors = async () => {
+      const result = await getInstructors();
+
+      if (result.success) {
+        setInstructors(result.data);
+      }
+    };
+
+    loadInstructors();
+  });
 
   function resetForm() {
     if (nameRef.current) {
@@ -187,10 +201,11 @@ export default function CourseForm() {
               <option value="" disabled>
                 Select an instructor
               </option>
-              <option value="1">John Doe</option>
-              <option value="2">Jane Doe</option>
-              <option value="3">John Smith</option>
-              <option value="4">Jane Smith</option>
+              {instructors.map((instructor) => (
+                <option key={instructor.id} value={instructor.id}>
+                  {instructor.name}
+                </option>
+              ))}
             </select>
           </div>
 
