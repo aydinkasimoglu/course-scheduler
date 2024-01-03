@@ -26,7 +26,13 @@ export default function CourseForm() {
     };
 
     loadInstructors();
-  });
+  }, []);
+
+  useEffect(() => {
+    if (errorMessage) {
+      alert(errorMessage);
+    }
+  }, [errorMessage]);
 
   function resetForm() {
     if (nameRef.current) {
@@ -70,7 +76,7 @@ export default function CourseForm() {
         onClick={openDialog}
         className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
-        Create
+        Create Course
       </button>
 
       <dialog ref={dialogRef} className="absolute m-auto bg-transparent">
@@ -94,7 +100,7 @@ export default function CourseForm() {
           </div>
 
           <div className="mb-4">
-            <label className="styledLabel" htmlFor="description">
+            <label className="styledLabel" htmlFor="day">
               Day
             </label>
             <select
@@ -117,7 +123,7 @@ export default function CourseForm() {
           </div>
 
           <div className="mb-4">
-            <label className="styledLabel" htmlFor="price">
+            <label className="styledLabel" htmlFor="time">
               Time
             </label>
             <select
@@ -224,16 +230,6 @@ export default function CourseForm() {
             >
               Create
             </button>
-          </div>
-
-          <div
-            className="flex h-8 items-end space-x-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {errorMessage && (
-              <p className="text-sm text-red-500">{errorMessage}</p>
-            )}
           </div>
         </form>
       </dialog>
