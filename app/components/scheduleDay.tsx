@@ -8,18 +8,6 @@ type ScheduleDayProps = {
 export default async function ScheduleDay({ day }: ScheduleDayProps) {
   const result = await getCoursesByDay(day);
 
-  /**
-   * 
-   * @param id 
-   * @returns instructor name 
-   */
-  async function getInstructor(id: number) {
-    const instructorName = await getInstructorName(id);
-    if (instructorName.success) {
-      return instructorName.data;
-    }
-  }
-
   if (!result.success) {
     return (
       <tr>
@@ -29,6 +17,23 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
   }
 
   const courses = result.data;
+
+  async function getInstructor(id: number) {
+    const instructorName = await getInstructorName(id);
+    if (instructorName.success) {
+      return instructorName.data;
+    }
+    return "Error loading instructor name";
+  }
+
+  const instructorMap: Record<number, string> = Object.fromEntries(
+    await Promise.all(
+      courses.map(async (course) => [
+        course.instructorId,
+        await getInstructor(course.instructorId),
+      ]),
+    ),
+  );
 
   const grades = ["1", "2", "3", "4"];
 
@@ -52,17 +57,24 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                       course.time === "9:00 - 10:00" && course.grade === grade,
                   )
                   .map((course) => (
-                    <li key={course.id} className="flex items-center justify-center p-0">
-                    <div id="about">
-                    	<p className="text-3xl">{course.name}</p>
-                      <p className="font-light text-xs">{getInstructor(course.instructorId)}</p>
-                    </div>
-                    <div id="dropdown-menu" className="ml-3">
-                      <button className="material-symbols-outlined text-gray-600 hover:text-gray-800 focus:outline-none">
-                              more_horiz
-                      </button>
-                    </div>
-                  </li>
+                    <li
+                      key={course.id}
+                      className="flex items-center justify-center p-0"
+                    >
+                      <div id="about">
+                        <p className="text-3xl">{course.name}</p>
+                        <p className="text-xs font-light">
+                          {instructorMap[course.instructorId]}
+                        </p>
+                      </div>
+                      <div id="dropdown-menu" className="ml-3">
+                        <button className="text-gray-600 hover:text-gray-800 focus:outline-none">
+                          <span className="material-symbols-outlined">
+                            more_horiz
+                          </span>
+                        </button>
+                      </div>
+                    </li>
                   ))}
               </ul>
             </td>
@@ -94,17 +106,24 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                         course.time === timeSlot && course.grade === grade,
                     )
                     .map((course) => (
-											<li key={course.id} className="flex items-center justify-center p-0">
-											<div id="about">
-												<p className="text-3xl">{course.name}</p>
-												<p className="font-light text-xs">{getInstructor(course.instructorId)}</p>
-											</div>
-											<div id="dropdown-menu" className="ml-3">
-												<button className="material-symbols-outlined text-gray-600 hover:text-gray-800 focus:outline-none">
-																more_horiz
-												</button>
-											</div>
-										</li>
+                      <li
+                        key={course.id}
+                        className="flex items-center justify-center p-0"
+                      >
+                        <div id="about">
+                          <p className="text-3xl">{course.name}</p>
+                          <p className="text-xs font-light">
+                            {instructorMap[course.instructorId]}
+                          </p>
+                        </div>
+                        <div id="dropdown-menu" className="ml-3">
+                          <button className="text-gray-600 hover:text-gray-800 focus:outline-none">
+                            <span className="material-symbols-outlined">
+                              more_horiz
+                            </span>
+                          </button>
+                        </div>
+                      </li>
                     ))}
                 </ul>
               </td>
