@@ -224,3 +224,19 @@ export async function deleteInstructor(
     return `Error while deleting an instructor: ${error}`;
   }
 }
+
+export async function deleteCourse(
+    id : number,
+)
+{
+    try {
+        await prisma.course.delete({
+            where: {
+                id: id,
+            },
+        });
+        revalidatePath("/");
+    } catch (error) {
+        return `Error while deleting a course: ${error}`;
+    }
+}
