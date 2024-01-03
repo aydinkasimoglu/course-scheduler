@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
 import { createInstructor } from "@/app/lib/actions";
 
@@ -8,6 +8,12 @@ export default function InstructorForm() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const [errorMessage, dispatch] = useFormState(createInstructor, undefined);
+
+  useEffect(() => {
+    if (errorMessage) {
+      alert(errorMessage);
+    }
+  }, [errorMessage]);
 
   function resetForm() {
     if (nameRef.current) {
@@ -73,16 +79,6 @@ export default function InstructorForm() {
             >
               Add
             </button>
-          </div>
-
-          <div
-            className="flex h-8 items-end space-x-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {errorMessage && (
-              <p className="text-sm text-red-500">{errorMessage}</p>
-            )}
           </div>
         </form>
       </dialog>
