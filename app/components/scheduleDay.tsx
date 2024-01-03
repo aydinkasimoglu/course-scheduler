@@ -1,5 +1,6 @@
 import { getCoursesByDay } from "@/app/lib/actions";
 import { getInstructorName } from "@/app/lib/actions";
+import EditCourse from "./editCourse";
 
 type ScheduleDayProps = {
   day: string;
@@ -62,18 +63,14 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                       className="flex items-center justify-center p-0"
                     >
                       <div id="about">
-                        <p className="text-3xl">{course.name}</p>
+                        <p className="text-base">{course.name} <span className="text-xs">({course.classNumber})</span></p>
                         <p className="text-xs font-light">
                           {instructorMap[course.instructorId]}
                         </p>
                       </div>
                       <div id="dropdown-menu" className="ml-3">
-                        <button className="text-gray-600 hover:text-gray-800 focus:outline-none">
-                          <span className="material-symbols-outlined">
-                            more_horiz
-                          </span>
-                        </button>
-                      </div>
+                            <EditCourse id={course.id} />
+                        </div>
                     </li>
                   ))}
               </ul>
@@ -106,22 +103,19 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                         course.time === timeSlot && course.grade === grade,
                     )
                     .map((course) => (
-                      <li
+                        <li
                         key={course.id}
                         className="flex items-center justify-center p-0"
                       >
                         <div id="about">
-                          <p className="text-3xl">{course.name}</p>
+                          <p className="text-base">{course.name}</p>
                           <p className="text-xs font-light">
                             {instructorMap[course.instructorId]}
                           </p>
+                          <p className="text-xs font-light">Derslik {course.classNumber}</p>
                         </div>
                         <div id="dropdown-menu" className="ml-3">
-                          <button className="text-gray-600 hover:text-gray-800 focus:outline-none">
-                            <span className="material-symbols-outlined">
-                              more_horiz
-                            </span>
-                          </button>
+                            <EditCourse id={course.id} />
                         </div>
                       </li>
                     ))}
