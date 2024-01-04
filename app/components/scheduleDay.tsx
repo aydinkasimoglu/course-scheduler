@@ -1,6 +1,7 @@
 import { getCoursesByDay } from "@/app/lib/actions";
 import { getInstructorName } from "@/app/lib/actions";
-import EditCourse from "./editCourse";
+import courseScheduler from "@/app/lib/courseScheduler";
+import EditCourse from "@/app/components/editCourse";
 
 type ScheduleDayProps = {
   day: string;
@@ -18,6 +19,7 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
   }
 
   const courses = result.data;
+  const grades = ["1", "2", "3", "4"];
 
   async function getInstructor(id: number) {
     const instructorName = await getInstructorName(id);
@@ -27,16 +29,70 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
     return "Error loading instructor name";
   }
 
-  const instructorMap: Record<number, string> = Object.fromEntries(
-    await Promise.all(
-      courses.map(async (course) => [
-        course.instructorId,
-        await getInstructor(course.instructorId),
-      ]),
-    ),
-  );
+  const instructorMap: Map<number, string> = new Map();
 
-  const grades = ["1", "2", "3", "4"];
+  for (const course of courses) {
+    if (!instructorMap.has(course.instructorId)) {
+      const instructorName = await getInstructor(course.instructorId);
+      instructorMap.set(course.instructorId, instructorName);
+    }
+
+    courseScheduler.graph.addNode(course.id);
+  }
+
+  for (const course of courses) {
+    const sameTimeCourses = courses.filter(
+      (c) =>
+        c.time === course.time &&
+        c.grade === course.grade &&
+        c.id !== course.id,
+    );
+
+    for (const sameTimeCourse of sameTimeCourses) {
+      if (sameTimeCourse.id !== course.id) {
+        courseScheduler.graph.addEdge(course.id, sameTimeCourse.id);
+      }
+    }
+  }
+
+  const colorAssignment = courseScheduler.scheduleCourses();
+
+  function generateColors(setSize: number): string[] {
+    const colors: string[] = [];
+
+    for (let i = 0; i < setSize; i++) {
+      const hue = (i * 360) / setSize;
+      const saturation = 80;
+      const lightness = 50;
+
+      colors.push(`hsl(${hue},${saturation}%,${lightness}%)`);
+    }
+
+    return colors;
+  }
+
+  // Get the number of colors needed
+  const numColors = new Set(Array.from(colorAssignment.values())).size;
+
+  // Generate the colors
+  const colors = generateColors(numColors);
+
+  // Map each course to a color
+  const courseColorMap: Map<number, string> = new Map();
+
+  for (const course of courses) {
+    const ca = colorAssignment.get(course.id);
+
+    if (ca === undefined) {
+      throw new Error("Color assignment is undefined");
+    }
+
+    const color = colors[ca - 1];
+
+    courseColorMap.set(course.id, color);
+  }
+
+  console.log(courseColorMap);
 
   return (
     <>
@@ -60,17 +116,23 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                   .map((course) => (
                     <li
                       key={course.id}
-                      className="flex items-center justify-center p-0"
+                      style={{ backgroundColor: courseColorMap.get(course.id) }}
+                      className={`flex items-center justify-center p-0`}
                     >
                       <div id="about">
-                        <p className="text-base">{course.name} <span className="text-xs">({course.classNumber})</span></p>
+                        <p className="text-base">
+                          {course.name}{" "}
+                          <span className="text-xs">
+                            ({course.classNumber})
+                          </span>
+                        </p>
                         <p className="text-xs font-light">
-                          {instructorMap[course.instructorId]}
+                          {instructorMap.get(course.instructorId)}
                         </p>
                       </div>
                       <div id="dropdown-menu" className="ml-3">
-                            <EditCourse id={course.id} />
-                        </div>
+                        <EditCourse id={course.id} />
+                      </div>
                     </li>
                   ))}
               </ul>
@@ -103,19 +165,28 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                         course.time === timeSlot && course.grade === grade,
                     )
                     .map((course) => (
-                        <li
+                      <li
                         key={course.id}
-                        className="flex items-center justify-center p-0"
+                        style={{
+                          backgroundColor: courseColorMap.get(course.id),
+                        }}
+                        className={`flex items-center justify-center p-0 bg-[${courseColorMap.get(
+                          course.id,
+                        )}]`}
                       >
                         <div id="about">
-                          <p className="text-base">{course.name}</p>
-                          <p className="text-xs font-light">
-                            {instructorMap[course.instructorId]}
+                          <p className="text-base">
+                            {course.name}{" "}
+                            <span className="text-xs">
+                              ({course.classNumber})
+                            </span>
                           </p>
-                          <p className="text-xs font-light">Derslik {course.classNumber}</p>
+                          <p className="text-xs font-light">
+                            {instructorMap.get(course.instructorId)}
+                          </p>
                         </div>
                         <div id="dropdown-menu" className="ml-3">
-                            <EditCourse id={course.id} />
+                          <EditCourse id={course.id} />
                         </div>
                       </li>
                     ))}
