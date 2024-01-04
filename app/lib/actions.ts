@@ -70,17 +70,11 @@ async function checkConflicts(
   classNumber: number,
   instructorId: number,
 ): Promise<boolean> {
-  // Check for time conflicts
-  const timeConflict = await prisma.course.findFirst({
-    where: {
-      day,
-      time,
-    },
-  });
-
   // Check for class number conflicts
   const classNumberConflict = await prisma.course.findFirst({
     where: {
+      day,
+      time,
       classNumber,
     },
   });
@@ -96,9 +90,7 @@ async function checkConflicts(
 
   // Return true if any conflict is found
   return (
-    timeConflict !== null ||
-    classNumberConflict !== null ||
-    instructorAvailabilityConflict !== null
+    classNumberConflict !== null || instructorAvailabilityConflict !== null
   );
 }
 
@@ -225,18 +217,15 @@ export async function deleteInstructor(
   }
 }
 
-export async function deleteCourse(
-    id : number,
-)
-{
-    try {
-        await prisma.course.delete({
-            where: {
-                id: id,
-            },
-        });
-        revalidatePath("/");
-    } catch (error) {
-        return `Error while deleting a course: ${error}`;
-    }
+export async function deleteCourse(id: number) {
+  try {
+    await prisma.course.delete({
+      where: {
+        id: id,
+      },
+    });
+    revalidatePath("/");
+  } catch (error) {
+    return `Error while deleting a course: ${error}`;
+  }
 }
