@@ -1,59 +1,40 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
-import { createCourse, getInstructors } from "@/app/lib/actions";
-import { Instructor } from "@prisma/client";
+import { createCourse } from "@/app/lib/actions";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useInstructors } from "./instructorProvider";
+
+type Inputs = {
+  name: string;
+  day: string;
+  time: string;
+  grade: string;
+  classNumber: string;
+  instructor: string;
+};
 
 export default function CourseForm() {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const dayRef = useRef<HTMLSelectElement>(null);
-  const timeRef = useRef<HTMLSelectElement>(null);
-  const gradeRef = useRef<HTMLSelectElement>(null);
-  const classRef = useRef<HTMLSelectElement>(null);
-  const instructorRef = useRef<HTMLSelectElement>(null);
   const [errorMessage, dispatch] = useFormState(createCourse, undefined);
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const { instructors, loadInstructors } = useInstructors();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<Inputs>();
 
   useEffect(() => {
-    const loadInstructors = async () => {
-      const result = await getInstructors();
-
-      if (result.success) {
-        setInstructors(result.data);
-      }
-    };
-
     loadInstructors();
-  }, []);
+  });
 
   useEffect(() => {
     if (errorMessage) {
       alert(errorMessage);
     }
   }, [errorMessage]);
-
-  function resetForm() {
-    if (nameRef.current) {
-      nameRef.current.value = "";
-    }
-    if (dayRef.current) {
-      dayRef.current.value = "";
-    }
-    if (timeRef.current) {
-      timeRef.current.value = "";
-    }
-    if (gradeRef.current) {
-      gradeRef.current.value = "";
-    }
-    if (classRef.current) {
-      classRef.current.value = "";
-    }
-    if (instructorRef.current) {
-      instructorRef.current.value = "";
-    }
-  }
 
   function closeDialog() {
     if (dialogRef.current) {
@@ -62,12 +43,27 @@ export default function CourseForm() {
   }
 
   function openDialog() {
-    resetForm();
+    reset();
 
     if (dialogRef.current) {
       dialogRef.current.showModal();
     }
   }
+
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    const formData = new FormData();
+
+    formData.append("name", data.name);
+    formData.append("day", data.day);
+    formData.append("time", data.time);
+    formData.append("grade", data.grade);
+    formData.append("classNumber", data.classNumber);
+    formData.append("instructor", data.instructor);
+
+    dispatch(formData);
+
+    closeDialog();
+  };
 
   return (
     <>
@@ -81,7 +77,7 @@ export default function CourseForm() {
 
       <dialog ref={dialogRef} className="absolute m-auto bg-transparent">
         <form
-          action={dispatch}
+          onSubmit={handleSubmit(onSubmit)}
           className="mb-4 rounded-md px-8 pb-8 pt-6 shadow-md"
         >
           <div className="mb-4">
@@ -89,14 +85,19 @@ export default function CourseForm() {
               Name
             </label>
             <input
-              ref={nameRef}
               id="name"
               className="textfield"
-              name="name"
               type="text"
               placeholder="Name"
-              required
+              {...register("name", { required: true })}
+              aria-invalid={errors.name ? "true" : "false"}
             />
+
+            {errors.name && errors.name.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mb-4">
@@ -104,12 +105,11 @@ export default function CourseForm() {
               Day
             </label>
             <select
-              ref={dayRef}
               id="day"
-              name="day"
               className="textfield"
               defaultValue=""
-              required
+              {...register("day", { required: true })}
+              aria-invalid={errors.day ? "true" : "false"}
             >
               <option value="" disabled>
                 Select a day
@@ -120,6 +120,12 @@ export default function CourseForm() {
               <option value="thursday">Thursday</option>
               <option value="friday">Friday</option>
             </select>
+
+            {errors.day && errors.day.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mb-4">
@@ -127,12 +133,11 @@ export default function CourseForm() {
               Time
             </label>
             <select
-              ref={timeRef}
               id="time"
-              name="time"
               className="textfield"
               defaultValue=""
-              required
+              {...register("time", { required: true })}
+              aria-invalid={errors.time ? "true" : "false"}
             >
               <option value="" disabled>
                 Select a time
@@ -146,6 +151,12 @@ export default function CourseForm() {
               <option value="15:00 - 16:00">15:00 - 16:00</option>
               <option value="16:00 - 17:00">16:00 - 17:00</option>
             </select>
+
+            {errors.time && errors.time.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mb-4">
@@ -153,12 +164,11 @@ export default function CourseForm() {
               Grade
             </label>
             <select
-              ref={gradeRef}
               id="grade"
-              name="grade"
               className="textfield"
               defaultValue=""
-              required
+              {...register("grade", { required: true })}
+              aria-invalid={errors.grade ? "true" : "false"}
             >
               <option value="" disabled>
                 Select a grade
@@ -168,6 +178,12 @@ export default function CourseForm() {
               <option value="3">3rd</option>
               <option value="4">4th</option>
             </select>
+
+            {errors.grade && errors.grade.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mb-4">
@@ -175,12 +191,11 @@ export default function CourseForm() {
               Class
             </label>
             <select
-              ref={classRef}
               id="class"
-              name="classNumber"
               className="textfield"
               defaultValue=""
-              required
+              {...register("classNumber", { required: true })}
+              aria-invalid={errors.classNumber ? "true" : "false"}
             >
               <option value="" disabled>
                 Select a class
@@ -190,6 +205,12 @@ export default function CourseForm() {
               <option value="1041">1041</option>
               <option value="1044">1044</option>
             </select>
+
+            {errors.classNumber && errors.classNumber.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mb-4">
@@ -197,12 +218,11 @@ export default function CourseForm() {
               Instructor
             </label>
             <select
-              ref={instructorRef}
               id="instructor"
-              name="instructor"
               className="textfield"
               defaultValue=""
-              required
+              {...register("instructor", { required: true })}
+              aria-invalid={errors.instructor ? "true" : "false"}
             >
               <option value="" disabled>
                 Select an instructor
@@ -213,6 +233,12 @@ export default function CourseForm() {
                 </option>
               ))}
             </select>
+
+            {errors.instructor && errors.instructor.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-x-6">
@@ -225,7 +251,6 @@ export default function CourseForm() {
             </button>
             <button
               type="submit"
-              onClick={closeDialog}
               className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               Create
