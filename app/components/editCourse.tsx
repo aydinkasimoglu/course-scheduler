@@ -1,12 +1,47 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { deleteCourse } from "@/app/lib/actions";
+import { deleteCourse, getCourseById, updateCourse } from "@/app/lib/actions";
+import { useFormState } from "react-dom";
+import { SubmitHandler, set, useForm } from "react-hook-form";
+import { useInstructors } from "@/app/components/instructorProvider";
+import { Course } from "@prisma/client";
+
+type Inputs = {
+  name: string;
+  classNumber: string;
+  instructor: string;
+};
 
 export default function EditCourse({ id }: { id: number }) {
   const [hidden, setHidden] = useState(true);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [errorMessage, dispatch] = useFormState(updateCourse, undefined);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const editDialogRef = useRef<HTMLDialogElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [course, setCourse] = useState<Course | undefined >(undefined);
+  const [name, setName] = useState(course?.name || "");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>({defaultValues: {name: course?.name}});
+
+  const {
+    instructors
+  } = useInstructors();
+
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    const formData = new FormData();
+
+    formData.append("name", data.name);
+    formData.append("classNumber", data.classNumber);
+    formData.append("instructor", data.instructor);
+
+    dispatch(formData);
+
+    closeEditDialog();
+  };
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -15,6 +50,16 @@ export default function EditCourse({ id }: { id: number }) {
       }
     }
 
+    async function getCourse(id: number) {
+      const response = await getCourseById(id);
+      if (response.success) {
+        const course = response.data;
+        setCourse(course);
+        setName(course?.name || "");
+      }
+    }
+    getCourse(id);
+
     document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
@@ -22,17 +67,28 @@ export default function EditCourse({ id }: { id: number }) {
     };
   }, []);
 
-  function closeDialog() {
-    if (dialogRef.current) {
-      dialogRef.current.close();
+  function closeDeleteDialog() {
+    if (deleteDialogRef.current) {
+      deleteDialogRef.current.close();
     }
   }
-  function openDialog() {
-    if (dialogRef.current) {
-      dialogRef.current.showModal();
+  function openDeleteDialog() {
+    if (deleteDialogRef.current) {
+      deleteDialogRef.current.showModal();
     }
   }
 
+  function closeEditDialog() {
+    if (editDialogRef.current) {
+      editDialogRef.current.close();
+    }
+  }
+
+  function openEditDialog() {
+    if (editDialogRef.current) {
+      editDialogRef.current.showModal();
+    }
+  }
   return (
     <>
       <button
@@ -53,6 +109,7 @@ export default function EditCourse({ id }: { id: number }) {
         >
           <div className="flex flex-col items-start" role="none">
             <button
+              onClick={openEditDialog}
               className="flex w-full items-center px-4 py-3 text-left text-sm hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)]"
               role="menuitem"
               tabIndex={-1}
@@ -62,7 +119,7 @@ export default function EditCourse({ id }: { id: number }) {
             </button>
             <hr className="w-5/6 self-center" />
             <button
-              onClick={openDialog}
+              onClick={openDeleteDialog}
               className="flex w-full items-center px-4 py-3 text-left text-sm text-red-600 hover:bg-[rgba(255,70,70,0.2)]"
               role="menuitem"
               tabIndex={-1}
@@ -76,7 +133,7 @@ export default function EditCourse({ id }: { id: number }) {
         </div>
       )}
 
-      <dialog ref={dialogRef} className="absolute m-auto bg-transparent">
+      <dialog ref={deleteDialogRef} className="absolute m-auto bg-transparent">
         <form
           className="rounded-md px-8 pb-8 pt-6"
           onSubmit={() => deleteCourse(id)}
@@ -87,16 +144,157 @@ export default function EditCourse({ id }: { id: number }) {
             <button
               type="button"
               className="text-sm font-semibold leading-6"
-              onClick={closeDialog}
+              onClick={closeEditDialog}
             >
               Cancel
             </button>
             <button
               type="submit"
-              onClick={closeDialog}
+              onClick={closeEditDialog}
               className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               Delete
+            </button>
+          </div>
+        </form>
+      </dialog>
+      
+      <dialog ref={editDialogRef} className="absolute m-auto bg-transparent">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mb-4 rounded-md px-8 pb-8 pt-6 shadow-md"
+        >
+          <div className="mb-4">
+            <label className="styledLabel" htmlFor="name">
+              Name
+            </label>
+            <input
+              id="name"
+              className="textfield"
+              type="text"
+              placeholder="Name"
+              {...register("name", { required: true })}
+              aria-invalid={errors.name ? "true" : "false"}
+              onChange={(e) => setName(e.target.value)}
+              value={name}
+            />
+            {errors.name && errors.name.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label className="styledLabel" htmlFor="day">
+              Day
+            </label>
+            <select
+              id="day"
+              className="textfield capitalize"
+              defaultValue=""
+              disabled
+            >
+              <option value="" disabled>
+                {course?.day}
+              </option>
+            </select>
+
+          </div>
+
+          <div className="mb-4">
+            <label className="styledLabel" htmlFor="time">
+              Time
+            </label>
+            <select
+              id="time"
+              className="textfield"
+              defaultValue=""
+              disabled
+            >
+              <option value="" disabled>
+                {course?.time}
+              </option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="styledLabel" htmlFor="grade">
+              Grade
+            </label>
+            <select
+              id="grade"
+              className="textfield"
+              defaultValue=""
+              disabled
+            >
+              <option value="" disabled>
+                {course?.grade}
+              </option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="styledLabel" htmlFor="class">
+              Class
+            </label>
+            <select
+              id="class"
+              className="textfield"
+              defaultValue=""
+              disabled
+            >
+              <option value="" disabled>
+                {course?.classNumber}
+              </option>
+            </select>
+
+          </div>
+
+          <div className="mb-4">
+            <label className="styledLabel" htmlFor="instructor">
+              Instructor
+            </label>
+            <select
+              id="instructor"
+              className="textfield"
+              defaultValue=""
+              {...register("instructor", { required: true })}
+              aria-invalid={errors.instructor ? "true" : "false"}
+            >
+              {instructors.find((instructor) => instructor.id === course?.instructorId) && (
+                <option value={course?.instructorId}>
+                  {instructors.find((instructor) => instructor.id === course?.instructorId)?.name}
+                </option>
+              )}
+              
+              {instructors.filter((instructor) => instructor.id !== course?.instructorId).map((instructor) => (
+                <option key={instructor.id} value={instructor.id}>
+                  {instructor.name}
+                </option>
+              ))}
+            </select>
+
+            {errors.instructor && errors.instructor.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-center justify-end gap-x-6">
+            <button
+              type="button"
+              className="text-sm font-semibold leading-6"
+              onClick={closeEditDialog}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Create
             </button>
           </div>
         </form>
