@@ -41,7 +41,7 @@ input {
 }
 
 .styledLabel {
-  @apply mb-2 block text-sm font-medium leading-6;
+  @apply mb-2 block text-sm font-medium leading-6 text-left;
 }
 
 label {
