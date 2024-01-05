@@ -18,17 +18,13 @@ type Inputs = {
 export default function CourseForm() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [errorMessage, dispatch] = useFormState(createCourse, undefined);
-  const { instructors, loadInstructors } = useInstructors();
+  const { instructors } = useInstructors();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<Inputs>();
-
-  useEffect(() => {
-    loadInstructors();
-  });
 
   useEffect(() => {
     if (errorMessage) {
