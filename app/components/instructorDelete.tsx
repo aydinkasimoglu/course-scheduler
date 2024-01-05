@@ -4,12 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { deleteInstructor, getInstructors } from "@/app/lib/actions";
 import { Instructor } from "@prisma/client";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 export default function InstructorDelete() {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const instructorRef = useRef<HTMLSelectElement>(null);
   const [errorMessage, dispatch] = useFormState(deleteInstructor, undefined);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<{ instructor: string }>();
 
   useEffect(() => {
     const loadInstructors = async () => {
@@ -29,12 +35,6 @@ export default function InstructorDelete() {
     }
   }, [errorMessage]);
 
-  function resetForm() {
-    if (instructorRef.current) {
-      instructorRef.current.value = "";
-    }
-  }
-
   function closeDialog() {
     if (dialogRef.current) {
       dialogRef.current.close();
@@ -42,12 +42,22 @@ export default function InstructorDelete() {
   }
 
   function openDialog() {
-    resetForm();
+    reset();
 
     if (dialogRef.current) {
       dialogRef.current.showModal();
     }
   }
+
+  const onSubmit: SubmitHandler<{ instructor: string }> = (data) => {
+    const formData = new FormData();
+
+    formData.append("instructor", data.instructor);
+
+    dispatch(formData);
+
+    closeDialog();
+  };
 
   return (
     <>
@@ -61,7 +71,7 @@ export default function InstructorDelete() {
 
       <dialog ref={dialogRef} className="absolute m-auto bg-transparent">
         <form
-          action={dispatch}
+          onSubmit={handleSubmit(onSubmit)}
           className="mb-4 rounded-md px-8 pb-8 pt-6 shadow-md"
         >
           <div className="mb-4">
@@ -69,22 +79,27 @@ export default function InstructorDelete() {
               Instructor
             </label>
             <select
-              ref={instructorRef}
               id="instructor"
-              name="instructor"
               className="textfield"
               defaultValue=""
-              required
+              {...register("instructor", { required: true })}
+              aria-invalid={errors.instructor ? "true" : "false"}
             >
               <option value="" disabled>
                 Select an instructor
               </option>
               {instructors.map((instructor) => (
-                <option key={instructor.id} value={instructor.id}>
+                <option key={instructor.id} value={String(instructor.id)}>
                   {instructor.name}
                 </option>
               ))}
             </select>
+
+            {errors.instructor && errors.instructor.type === "required" && (
+              <span className="text-xs italic text-red-500" role="alert">
+                This field is required
+              </span>
+            )}
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-x-6">
@@ -97,7 +112,6 @@ export default function InstructorDelete() {
             </button>
             <button
               type="submit"
-              onClick={closeDialog}
               className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               Delete
