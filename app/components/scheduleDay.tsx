@@ -92,8 +92,6 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
     courseColorMap.set(course.id, color);
   }
 
-  console.log(courseColorMap);
-
   return (
     <>
       <tr>
