@@ -229,3 +229,49 @@ export async function deleteCourse(id: number) {
     return `Error while deleting a course: ${error}`;
   }
 }
+
+export async function updateCourse(
+  currentState: string | undefined,
+  formData: FormData,
+) 
+{
+  try {
+    const { id, name, classNumber, instructor } =
+      Object.fromEntries(formData.entries());
+
+      await prisma.course.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          name: String(name),
+          classNumber: Number(classNumber),
+          instructor: {
+            connect: {
+              id: Number(instructor),
+            },
+          },
+        },
+      });
+      revalidatePath("/");
+  } catch (error) {
+    return `Error while updating course: ${error}`;
+  }
+}
+
+export async function getCourseById(id: number): Promise<Result<Course>> {
+  try {
+    const course = await prisma.course.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if(!course) {
+      throw new Error("Course not found");
+    }
+    return { success: true, data: course};
+  } catch (error) {
+    return { success: false, error: error as Error };
+  }
+}
