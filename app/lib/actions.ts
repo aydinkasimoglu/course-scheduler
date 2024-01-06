@@ -46,9 +46,7 @@ export async function createCourse(
 
       revalidatePath("/");
     } else {
-      return `There's already a course on ${String(day)} at ${String(
-        time,
-      )} for Instructor ${Number(instructor)}`;
+      return `There may be a conflict with the course you are trying to create. Please check the schedule and try again.`;
     }
   } catch (error) {
     return `Error while creating course: ${error}`;
