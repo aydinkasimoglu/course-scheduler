@@ -1,33 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
-import { deleteInstructor, getInstructors } from "@/app/lib/actions";
-import { Instructor } from "@prisma/client";
+import { deleteInstructor } from "@/app/lib/actions";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { useInstructors } from "./instructorProvider";
 
 export default function InstructorDelete() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [errorMessage, dispatch] = useFormState(deleteInstructor, undefined);
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const { instructors, loadInstructors } = useInstructors();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<{ instructor: string }>();
-
-  useEffect(() => {
-    const loadInstructors = async () => {
-      const result = await getInstructors();
-
-      if (result.success) {
-        setInstructors(result.data);
-      }
-    };
-
-    loadInstructors();
-  }, []);
 
   useEffect(() => {
     if (errorMessage) {
@@ -57,6 +45,8 @@ export default function InstructorDelete() {
     dispatch(formData);
 
     closeDialog();
+
+    loadInstructors();
   };
 
   return (
