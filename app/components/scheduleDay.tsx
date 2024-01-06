@@ -105,7 +105,7 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
               course.time === "9:00 - 10:00" && course.grade === grade,
           ).length > 0 ? (
             <td key={grade}>
-              <ul>
+              <ul className="flex flex-col items-center">
                 {courses
                   .filter(
                     (course) =>
@@ -115,7 +115,7 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                     <li
                       key={course.id}
                       style={{ backgroundColor: courseColorMap.get(course.id) }}
-                      className={`flex items-center justify-center p-0`}
+                      className="flex items-center justify-center rounded-md px-5"
                     >
                       <div id="about">
                         <p className="text-base">
@@ -156,7 +156,7 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
               (course) => course.time === timeSlot && course.grade === grade,
             ).length > 0 ? (
               <td key={grade}>
-                <ul>
+                <ul className="flex flex-col items-center">
                   {courses
                     .filter(
                       (course) =>
@@ -168,9 +168,7 @@ export default async function ScheduleDay({ day }: ScheduleDayProps) {
                         style={{
                           backgroundColor: courseColorMap.get(course.id),
                         }}
-                        className={`flex items-center justify-center p-0 bg-[${courseColorMap.get(
-                          course.id,
-                        )}]`}
+                        className=" flex items-center justify-center rounded-md px-5"
                       >
                         <div id="about">
                           <p className="text-base">
