@@ -3,39 +3,45 @@
 import { useEffect, useRef, useState } from "react";
 import { deleteCourse, getCourseById, updateCourse } from "@/app/lib/actions";
 import { useFormState } from "react-dom";
-import { SubmitHandler, set, useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { useInstructors } from "@/app/components/instructorProvider";
 import { Course } from "@prisma/client";
 
 type Inputs = {
   name: string;
-  classNumber: string;
   instructor: string;
 };
 
-export default function EditCourse({ id }: { id: number }) {
-  const [hidden, setHidden] = useState(true);
-  const [errorMessage, dispatch] = useFormState(updateCourse, undefined);
+type EditCourseProps = {
+  /**
+   * The ID of the course to edit
+   */
+  id: number;
+};
+
+export default function EditCourse({ id }: EditCourseProps) {
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const editDialogRef = useRef<HTMLDialogElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [course, setCourse] = useState<Course | undefined >(undefined);
-  const [name, setName] = useState(course?.name || "");
+
+  const [hidden, setHidden] = useState(true);
+  const [course, setCourse] = useState<Course | undefined>(undefined);
+  const [errorMessage, dispatch] = useFormState(updateCourse, undefined);
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
-  } = useForm<Inputs>({defaultValues: {name: course?.name}});
+  } = useForm<Inputs>();
 
-  const {
-    instructors
-  } = useInstructors();
+  const { instructors } = useInstructors();
 
   const onSubmit: SubmitHandler<Inputs> = (data) => {
     const formData = new FormData();
 
+    formData.append("id", String(id));
     formData.append("name", data.name);
-    formData.append("classNumber", data.classNumber);
     formData.append("instructor", data.instructor);
 
     dispatch(formData);
@@ -44,28 +50,40 @@ export default function EditCourse({ id }: { id: number }) {
   };
 
   useEffect(() => {
+    /**
+     * Detects clicks outside of the menu and closes the menu.
+     *
+     * @param event Click event
+     */
     function handleOutsideClick(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setHidden(true);
       }
     }
 
-    async function getCourse(id: number) {
+    async function getCourse() {
       const response = await getCourseById(id);
       if (response.success) {
         const course = response.data;
         setCourse(course);
-        setName(course?.name || "");
+        setValue("name", course.name);
       }
     }
-    getCourse(id);
+
+    getCourse();
 
     document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
-  }, []);
+  }, [id, setValue]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      alert(errorMessage);
+    }
+  }, [errorMessage]);
 
   function closeDeleteDialog() {
     if (deleteDialogRef.current) {
@@ -144,13 +162,13 @@ export default function EditCourse({ id }: { id: number }) {
             <button
               type="button"
               className="text-sm font-semibold leading-6"
-              onClick={closeEditDialog}
+              onClick={closeDeleteDialog}
             >
               Cancel
             </button>
             <button
               type="submit"
-              onClick={closeEditDialog}
+              onClick={closeDeleteDialog}
               className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
               Delete
@@ -158,7 +176,7 @@ export default function EditCourse({ id }: { id: number }) {
           </div>
         </form>
       </dialog>
-      
+
       <dialog ref={editDialogRef} className="absolute m-auto bg-transparent">
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -175,8 +193,7 @@ export default function EditCourse({ id }: { id: number }) {
               placeholder="Name"
               {...register("name", { required: true })}
               aria-invalid={errors.name ? "true" : "false"}
-              onChange={(e) => setName(e.target.value)}
-              value={name}
+              onChange={(e) => setValue("name", e.target.value)}
             />
             {errors.name && errors.name.type === "required" && (
               <span className="text-xs italic text-red-500" role="alert">
@@ -199,19 +216,13 @@ export default function EditCourse({ id }: { id: number }) {
                 {course?.day}
               </option>
             </select>
-
           </div>
 
           <div className="mb-4">
             <label className="styledLabel" htmlFor="time">
               Time
             </label>
-            <select
-              id="time"
-              className="textfield"
-              defaultValue=""
-              disabled
-            >
+            <select id="time" className="textfield" defaultValue="" disabled>
               <option value="" disabled>
                 {course?.time}
               </option>
@@ -222,12 +233,7 @@ export default function EditCourse({ id }: { id: number }) {
             <label className="styledLabel" htmlFor="grade">
               Grade
             </label>
-            <select
-              id="grade"
-              className="textfield"
-              defaultValue=""
-              disabled
-            >
+            <select id="grade" className="textfield" defaultValue="" disabled>
               <option value="" disabled>
                 {course?.grade}
               </option>
@@ -238,42 +244,33 @@ export default function EditCourse({ id }: { id: number }) {
             <label className="styledLabel" htmlFor="class">
               Class
             </label>
-            <select
-              id="class"
-              className="textfield"
-              defaultValue=""
-              disabled
-            >
+            <select id="class" className="textfield" defaultValue="" disabled>
               <option value="" disabled>
                 {course?.classNumber}
               </option>
             </select>
-
           </div>
 
           <div className="mb-4">
             <label className="styledLabel" htmlFor="instructor">
               Instructor
             </label>
-            <select
-              id="instructor"
-              className="textfield"
-              defaultValue=""
-              {...register("instructor", { required: true })}
-              aria-invalid={errors.instructor ? "true" : "false"}
-            >
-              {instructors.find((instructor) => instructor.id === course?.instructorId) && (
-                <option value={course?.instructorId}>
-                  {instructors.find((instructor) => instructor.id === course?.instructorId)?.name}
-                </option>
-              )}
-              
-              {instructors.filter((instructor) => instructor.id !== course?.instructorId).map((instructor) => (
-                <option key={instructor.id} value={instructor.id}>
-                  {instructor.name}
-                </option>
-              ))}
-            </select>
+            {course && (
+              <select
+                id="instructor"
+                className="textfield"
+                defaultValue={course.instructorId}
+                {...register("instructor", { required: true })}
+                aria-invalid={errors.instructor ? "true" : "false"}
+                onChange={(e) => setValue("instructor", e.target.value)}
+              >
+                {instructors.map((instructor) => (
+                  <option key={instructor.id} value={instructor.id}>
+                    {instructor.name}
+                  </option>
+                ))}
+              </select>
+            )}
 
             {errors.instructor && errors.instructor.type === "required" && (
               <span className="text-xs italic text-red-500" role="alert">
