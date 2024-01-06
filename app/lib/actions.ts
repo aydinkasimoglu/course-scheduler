@@ -217,6 +217,12 @@ export async function deleteInstructor(
   }
 }
 
+/**
+ * Deletes a course in the database.
+ *
+ * @param id The ID of the course to delete.
+ * @returns Error message if any.
+ */
 export async function deleteCourse(id: number) {
   try {
     await prisma.course.delete({
@@ -230,35 +236,45 @@ export async function deleteCourse(id: number) {
   }
 }
 
+/**
+ * Updates a course in the database.
+ *
+ * @param currentState Current state of the form.
+ * @param formData Submitted form data.
+ * @returns Error message if any.
+ */
 export async function updateCourse(
   currentState: string | undefined,
   formData: FormData,
-) 
-{
+) {
   try {
-    const { id, name, classNumber, instructor } =
-      Object.fromEntries(formData.entries());
+    const { id, name, instructor } = Object.fromEntries(formData.entries());
 
-      await prisma.course.update({
-        where: {
-          id: Number(id),
-        },
-        data: {
-          name: String(name),
-          classNumber: Number(classNumber),
-          instructor: {
-            connect: {
-              id: Number(instructor),
-            },
+    await prisma.course.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        name: String(name),
+        instructor: {
+          connect: {
+            id: Number(instructor),
           },
         },
-      });
-      revalidatePath("/");
+      },
+    });
+    revalidatePath("/");
   } catch (error) {
     return `Error while updating course: ${error}`;
   }
 }
 
+/**
+ * Gets a course by ID.
+ *
+ * @param id The ID of the course.
+ * @returns The course data or error.
+ */
 export async function getCourseById(id: number): Promise<Result<Course>> {
   try {
     const course = await prisma.course.findUnique({
@@ -267,10 +283,10 @@ export async function getCourseById(id: number): Promise<Result<Course>> {
       },
     });
 
-    if(!course) {
+    if (!course) {
       throw new Error("Course not found");
     }
-    return { success: true, data: course};
+    return { success: true, data: course };
   } catch (error) {
     return { success: false, error: error as Error };
   }
